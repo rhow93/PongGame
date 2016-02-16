@@ -111,15 +111,15 @@ render game =
 initialState :: PongGame
 initialState = Game
   { ballLoc = (0, 0)
-  , ballVel = (0, 0)
+  , ballVel = (50, 100)
   , player1 = 40
   , player2 = 100
   , qKey = False
   , aKey = False
   , oKey = False
   , lKey = False
-  , player1Score = 3
-  , player2Score = 7
+  , player1Score = 0
+  , player2Score = 0
   }
   
 moveBall :: Float     -- ^ The number of seconds since last update
