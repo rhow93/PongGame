@@ -19,36 +19,6 @@ background = black
 score :: Color
 score = white
 
-drawing :: Picture
-drawing = pictures [ball, walls, 
-                    mkPaddle rose 120 (-20),
-                    mkPaddle orange (-120) 40]
-  where
-    -- | the pong ball
-    ball = translate (-10) 40 $ color ballColor $ circleSolid 10
-    ballColor = dark red
-    
-    -- | The bottom and top walls
-    wall :: Float -> Picture
-    wall offset = 
-      translate 0 offset $
-        color wallColor $
-          rectangleSolid 270 10
-          
-    wallColor = greyN 0.5
-    walls = pictures [wall 150, wall (-150)]
-    
-    
-    -- | Makes a paddle of a given border and vertical offset
-    mkPaddle :: Color -> Float -> Float -> Picture
-    mkPaddle col x y = pictures
-      [ translate x y $ color col $ rectangleSolid 20 80
-      , translate x y $ color paddleColor $ rectangleSolid 20 80
-      ]
-      
-    paddleColor = light (light blue)
-    
-
 -- | A data structure to hold the state of the Pong game
 -- This allows us to easily update the game state without worrying
 -- how each piece is drawn. We can summarise the game state by
@@ -56,6 +26,8 @@ drawing = pictures [ball, walls,
 data PongGame = Game 
   { ballLoc :: (Float, Float) -- ^ Pong ball (x, y) location.
   , ballVel :: (Float, Float) -- ^ Pong ball (x, y) velocity.
+  , ball2Loc:: (Float, Float)
+  , ball2Vel:: (Float, Float)
   , player1 :: Float          -- ^ Left player paddle height.
                               -- Zero is the middle of the screen. 
   , player2 :: Float          -- ^ right player paddle height
@@ -71,7 +43,7 @@ data PongGame = Game
 -- | Draw a pong game state (converts to a picture).
 render :: PongGame -> Picture
 render game = 
-  pictures [ball, walls,
+  pictures [ball, ball2, walls,
             mkPaddle rose 120 $ player1 game,
             mkPaddle orange (-120) $ player2 game,
             score1, score2, dash]
@@ -82,6 +54,9 @@ render game =
     -- argument and converting these into multiple arguments. 
     ball = uncurry translate (ballLoc game) $ color ballColor $ circleSolid 10
     ballColor = dark red
+    
+    ball2 = uncurry translate (ball2Loc game) $ color ball2Color $ circleSolid 10
+    ball2Color = dark blue
     
     -- The bottom and top walls
     wall :: Float -> Picture
@@ -112,6 +87,8 @@ initialState :: PongGame
 initialState = Game
   { ballLoc = (0, 0)
   , ballVel = (50, 100)
+  , ball2Loc = (0, 0)
+  , ball2Vel = (-50, -100)
   , player1 = 40
   , player2 = 100
   , qKey = False
@@ -122,71 +99,64 @@ initialState = Game
   , player2Score = 0
   }
   
-moveBall :: Float     -- ^ The number of seconds since last update
+moveBall :: Float     -- ^ The number of milliseconds since last update
          -> PongGame  -- ^ The initial game state
          -> PongGame  -- ^ A new game state with an updated ball position
-moveBall seconds game = game { ballLoc = (x', y') }
+moveBall seconds game = game { ballLoc = (x', y'), ball2Loc = (x'', y'') }
   where 
     -- Old locations and velocities
     (x, y) = ballLoc game
     (vx, vy) = ballVel game
     
+    (xOld, yOld) = ball2Loc game
+    (vx', vy') = ball2Vel game
+    
     -- New locations
-    x' = x + vx * seconds
-    y' = y + vy * seconds
-
-
+    x' = x + vx * seconds * 2
+    y' = y + vy * seconds * 2
+    
+    x'' = xOld + vx' * seconds * 2
+    y'' = yOld + vy' * seconds * 2
+    
 -- | Update the game by moving the ball
 -- Ignores viewport argument
 update :: Float -> PongGame -> PongGame
 update seconds = (updateKeyPress) .                  -- ^ checks for key presses, and updates paddle location
                  (goalScored) .                      -- ^ checks if a goal has been scored
-                 (wallBounce . moveBall seconds) .   -- ^ checks for wall collisions
+                 (wallBounce) .                      -- ^ checks for wall collisions
                  (paddleBounce . moveBall seconds)   -- ^ checks for paddle collisions
 
 goalScored :: PongGame -> PongGame
-goalScored = (player1Goal) . (player2Goal)      -- ^ checks for player 2 goal then player 1 goal
-
-player1Goal :: PongGame -> PongGame
-player1Goal game = game { player1Score = x' }
+goalScored game = game { player1Score = x', player2Score = y'}
   where
-    -- checks if the ball has passed a certain x value
-    -- if it has then move the ball back to the centre
-    -- and give a point to the other player
+    
     x = player1Score game
+    y = player2Score game
     (vx, vy) = ballLoc game
     
     x' = if vx < (-150) then x + 1 else x
-    
-player2Goal :: PongGame -> PongGame
-player2Goal game = game { player2Score = x' }
-  where
-    x = player2Score game
-    (vx, vy) = ballLoc game
-    
-    x' = if vx > 150 then x + 1 else x
-    
+    y' = if vx > 150 then y + 1 else y
 
 -- | This function will detect a collision of the ball with the paddle.
 -- When there is a collision, the velocity of the ball will change to 
 -- bounce it off the paddle
 paddleBounce :: PongGame -> PongGame
-paddleBounce game = game { ballVel = (vx', vy) }
+paddleBounce game = game { ballVel = (vx1', vy1), ball2Vel = (vx2', vy2) }
   where
-    -- this is where we will change the velocities of the ball
-    -- if it is hitting a paddle.
     radius = 10
     
     -- the old velocities
-    (vx, vy) = ballVel game
+    (vx1, vy1) = ballVel game
+    (vx2, vy2) = ball2Vel game
     
-    vx' = if paddleCollision (ballLoc game) game radius 
-      then
-        --update velocity
-        -vx
-      else 
-        -- do nothing, return old velocity
-        vx
+    
+    vx1' = if paddleCollision (ballLoc game) game radius 
+      then -vx1
+      else  vx1
+      
+    vx2' = if paddleCollision (ball2Loc game) game radius
+      then -vx2
+      else  vx2
        
 paddleCollision :: Position -> PongGame -> Radius -> Bool
 paddleCollision (x, y) game radius = leftCollision || rightCollision
@@ -204,6 +174,7 @@ paddleCollision (x, y) game radius = leftCollision || rightCollision
         (y - radius >= player1PaddleLoc - 60) &&
         -- checks if ball is below baddle
         (y + radius <=  player1PaddleLoc + 60)
+    
     leftCollision =(x - (radius + 40) <= -paddleLocX) &&
         (x + (radius + 40) >= (-152)) &&
         (y - radius >= player2PaddleLoc - 60) &&
@@ -223,25 +194,27 @@ wallCollision (_, y) radius = topCollision || bottomCollision
     topCollision = y - radius <= -fromIntegral height / 2 
     bottomCollision = y + radius >= fromIntegral height / 2
 
+
 -- | This will detect a collision of the ball with one of the side walls.
 -- When there is a collision, the velocity will change to have the ball
 -- bounce off the wall.
 wallBounce :: PongGame -> PongGame
-wallBounce game = game { ballVel = (vx, vy') }
+wallBounce game = game { ballVel = (vx1, vy1'), ball2Vel = (vx2, vy2') }
   where
     -- radius. using the same thing as in `render`.
-    radius = 10
-    
+    radius = 10    
     -- The old velocities
-    (vx, vy) = ballVel game
+    (vx1, vy1) = ballVel game
+    (vx2, vy2) = ball2Vel game 
     
-    vy' = if wallCollision (ballLoc game) radius
-      then 
-        -- update the velocity
-        -vy
-      else
-        -- Do nothing. Return the old velocity
-        vy
+    -- if there is a collision, flip y vel, else don't
+    vy1' = if wallCollision (ballLoc game) radius
+      then -vy1 
+      else vy1
+        
+    vy2' = if wallCollision (ball2Loc game) radius
+      then -vy2
+      else vy2
 
 -- | responds to a key event
 handleKeys :: Event -> PongGame -> PongGame
@@ -274,55 +247,30 @@ handleKeys (EventKey (Char 'l') _ _ _ ) game =
 handleKeys (EventKey (Char 'c') _ _ _ ) game =
   game { ballLoc = (0, 0) }
   
+handleKeys (EventKey (Char 'v') _ _ _) game =
+  game { ball2Loc = (0, 0) }
+  
 -- Do nothing for all other events.  
 handleKeys _ game = game
 
+-- checks if any keys are being pressed and updates the corresponding
+-- player position
 updateKeyPress :: PongGame -> PongGame
-updateKeyPress = (aKeyPress) . (oKeyPress) . (lKeyPress) . (qKeyPress)
-
-aKeyPress :: PongGame -> PongGame
-aKeyPress game = game { player2 = x' }
-  -- This method is meant to check if the a key has been pressed and 
-  -- update the value of player2 
-  
+updateKeyPress game = game { player1 = x', player2 = y' }
   where
-    -- old location of player
-    x = player2 game 
     
-    x' = if aKey game && player2 game > (-100)
-      -- if key is pressed, update location
-      then player2 game - 10 
-      -- do nothing, return old value
-      else x
-      
-oKeyPress :: PongGame -> PongGame
-oKeyPress game = game { player1 = x' }
-  
-  where
-    x = player1 game 
-    x' = if oKey game && player1 game < 100
-      then player1 game + 10 
-      else x
-
-lKeyPress :: PongGame -> PongGame
-lKeyPress game = game { player1 = x' }
-
-  where
-    x = player1 game     
-    x' = if lKey game && player1 game > (-100)
-      then player1 game - 10 
-      else x
-      
-qKeyPress :: PongGame -> PongGame
-qKeyPress game = game { player2 = x' } 
-  
-  where
-    x = player2 game  
-    x' = if qKey game && player2 game < 100
-      then player2 game + 10 
-      else x
+    -- old location of players
+    x = player1 game
+    y = player2 game
     
-
+    y' = if aKey game && player2 game > (-100) then player2 game - 10
+    else if qKey game && player2 game < 100    then player2 game + 10
+    else y
+    
+    x' = if oKey game && player1 game < 100    then player1 game + 10
+    else if lKey game && player1 game > (-100) then player1 game - 10
+    else x
+    
 -- | The main method
 --  This simply calls a simulate function which creates the window,
 --  The background color, the number of simulations, an inital
