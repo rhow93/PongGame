@@ -3,6 +3,8 @@ module Main(main) where
 import Graphics.Gloss
 import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Interface.Pure.Game
+import Graphics.Gloss.Interface.IO.Game
+
 
 width, height, offset, fps :: Int
 width = 300
@@ -39,7 +41,8 @@ data PongGame = Game
   , player2Score :: Int
 
   } deriving Show
-  
+
+-- NB this does not currently return an IO picture  
 -- | Draw a pong game state (converts to a picture).
 render :: PongGame -> Picture
 render game = 
@@ -81,6 +84,7 @@ render game =
       ]
       
     paddleColor = light (light blue)
+
     
 -- | Initialise the game with this game state
 initialState :: PongGame
@@ -278,6 +282,8 @@ updateKeyPress game = game { player1 = x', player2 = y' }
 -- the game state to a picture, and then this is passed to the current viewport
 main :: IO ()
 main = play window background fps initialState render handleKeys update
+
+
 
 
 
