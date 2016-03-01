@@ -13,7 +13,7 @@ offset = 100
 fps = 60
 
 playerXVal :: Float
-playerXVal = (fromIntegral width / 2) - 30 -- players are created at either +120 or -120
+playerXVal = (fromIntegral width / 2) - 30 
 
 window :: Display
 window = InWindow "Pong" (600, height + 300) (offset, offset) 
@@ -78,9 +78,9 @@ render game =
     walls = pictures [wall 150, wall (-150)]
     
     -- shows the score on screen 
-    score1 = translate 120 (-270) $ color score $ Text $ show (player1Score game)
-    score2 = translate (-180) (-270) $ color score $ Text $ show (player2Score game)
-    dash = translate (-30) (-270) $ color score $ Text "-"
+    score1 = translate 200 (-270) $ color score $ Text $ show (player1Score game)
+    score2 = translate (-200) (-270) $ color score $ Text $ show (player2Score game)
+    dash = translate 0 (-270) $ color score $ Text "-"
     
     -- Make a paddle of a given border and vertical offset
     mkPaddle :: Color -> Float -> Float -> Picture
