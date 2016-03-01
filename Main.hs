@@ -21,6 +21,9 @@ background = black
 score :: Color
 score = white
 
+type Radius = Float  -- ^ An Alias of the type Float
+type Position = (Float, Float) -- ^ Another Alias, replacing Position with (Float, Float)
+
 -- | A data structure to hold the state of the Pong game
 -- This allows us to easily update the game state without worrying
 -- how each piece is drawn. We can summarise the game state by
@@ -30,8 +33,7 @@ data PongGame = Game
   , ballVel :: (Float, Float) -- ^ Pong ball (x, y) velocity.
   , ball2Loc:: (Float, Float)
   , ball2Vel:: (Float, Float)
-  , player1 :: Float          -- ^ Left player paddle height.
-                              -- Zero is the middle of the screen. 
+  , player1 :: Float          -- ^ Left player paddle height. 
   , player2 :: Float          -- ^ right player paddle height
   , qKey    :: Bool
   , aKey    :: Bool
@@ -144,6 +146,8 @@ goalScored game = game { player1Score = x', player2Score = y'}
 -- | This function will detect a collision of the ball with the paddle.
 -- When there is a collision, the velocity of the ball will change to 
 -- bounce it off the paddle
+-- N.B - This should be changed to x collision as it determines a collision
+-- on the X axis.
 paddleBounce :: PongGame -> PongGame
 paddleBounce game = game { ballVel = (vx1', vy1), ball2Vel = (vx2', vy2) }
   where
@@ -162,6 +166,11 @@ paddleBounce game = game { ballVel = (vx1', vy1), ball2Vel = (vx2', vy2) }
       then -vx2
       else  vx2
        
+       
+-- Is there a way of making this more generic, such that it
+-- simply detects a collision between a the ball and any area
+-- on the x axis?
+-- also, this code is disgusting and needs sorting
 paddleCollision :: Position -> PongGame -> Radius -> Bool
 paddleCollision (x, y) game radius = leftCollision || rightCollision
   where
@@ -169,25 +178,25 @@ paddleCollision (x, y) game radius = leftCollision || rightCollision
     player1PaddleLoc = player1 game
     player2PaddleLoc = player2 game
     paddleLocX = fromIntegral width / 2
+    -- adjust paddle location from 150 to 110
+    paddleAdjust = 40
+    radiusOffset = 40
+    -- length above / below paddle where we detect collision
+    paddleRadius = 60
 
     -- This only detects collisions for the side, not the entire paddle
     -- Offset is 40 because paddles are created at 120, and not 150, which is the width of the screen
-    rightCollision = (x + (radius + 40) >= paddleLocX) &&
-        (x + (radius + 40) <= 152) &&
+    rightCollision = (x + radius >= paddleLocX - paddleAdjust) &&
+        (x + (radius + radiusOffset) <= 152) &&
         -- checks if ball is above paddle (be a bit nice with hitboxes so people don't complain)
         (y - radius >= player1PaddleLoc - 60) &&
         -- checks if ball is below baddle
         (y + radius <=  player1PaddleLoc + 60)
     
-    leftCollision =(x - (radius + 40) <= -paddleLocX) &&
+    leftCollision = (x - (radius + 40) <= -paddleLocX) &&
         (x + (radius + 40) >= (-152)) &&
         (y - radius >= player2PaddleLoc - 60) &&
         (y + radius <=  player2PaddleLoc + 60)
-
-type Radius = Float  -- ^ the type keyword creates an alias. Everytime we
--- see Radius, we can replace it with float.
-type Position = (Float, Float) -- ^ this is similar with position, everytime 
--- we see a position type, we know this is a (Float, Float) couplet.
 
 wallCollision :: Position -> Radius -> Bool -- ^ using this alias allows 
 -- our code to be easy to read. This is standard haskell documentation
