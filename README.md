@@ -6,17 +6,17 @@ The .hs file containing the pong game code in it's current form is located at fi
 
 To compile this code you'll need to have the full haskell platform installed
 
-sudo apt-get install haskell-platform
+`sudo apt-get install haskell-platform`
 
 navigate to the cloned repo and enter the following
 
-cabal update
-cabal sandbox init
-cabal init 
+`cabal update`
+`cabal sandbox init`
+`cabal init`
 
 (here you want to make sure that you mark the program as executable, everything else should take default values)
 
-cabal install --only-dependencies
-cabal run
+`cabal install --only-dependencies`
+`cabal run`
 
 This should allow you to compile + run the main file from source.
