@@ -43,8 +43,7 @@ data PongGame = Game
   , player2Score :: Int
 
   } deriving Show
-
--- NB this does not currently return an IO picture  
+ 
 -- | Draw a pong game state (converts to a picture).
 render :: PongGame -> Picture
 render game = 
