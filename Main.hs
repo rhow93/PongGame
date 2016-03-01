@@ -7,13 +7,16 @@ import Graphics.Gloss.Interface.IO.Game
 
 
 width, height, offset, fps :: Int
-width = 300
+width = 500
 height = 300
 offset = 100
 fps = 60
 
+playerXVal :: Float
+playerXVal = (fromIntegral width / 2) - 30 -- players are created at either +120 or -120
+
 window :: Display
-window = InWindow "Pong" (width + 300, height + 300) (offset, offset)
+window = InWindow "Pong" (600, height + 300) (offset, offset) 
 
 background :: Color
 background = black
@@ -48,8 +51,8 @@ data PongGame = Game
 render :: PongGame -> Picture
 render game = 
   pictures [ball, ball2, walls,
-            mkPaddle rose 120 $ player1 game,
-            mkPaddle orange (-120) $ player2 game,
+            mkPaddle rose playerXVal $ player1 game,
+            mkPaddle orange (-playerXVal) $ player2 game,
             score1, score2, dash]
   
   where
@@ -62,12 +65,14 @@ render game =
     ball2 = uncurry translate (ball2Loc game) $ color ball2Color $ circleSolid 10
     ball2Color = dark blue
     
+    
+    -- wall length was previously 270
     -- The bottom and top walls
     wall :: Float -> Picture
     wall offset = 
       translate 0 offset $
         color wallColor $
-          rectangleSolid 270 10
+          rectangleSolid 670 10
     
     wallColor = greyN 0.5
     walls = pictures [wall 150, wall (-150)]
@@ -178,22 +183,20 @@ paddleCollision (x, y) game radius = leftCollision || rightCollision
     player2PaddleLoc = player2 game
     paddleLocX = fromIntegral width / 2
     
-    -- adjust paddle location from 150 to 110
-    paddleAdjust = 40
+    -- adjust paddle location
+    paddleAdjust = 60
     -- length above / below paddle where we detect collision
     paddleRadius = 60
-
-    -- This only detects collisions for the side, not the entire paddle
-    -- Offset is 40 because paddles are created at 120, and not 150, which is the width of the screen
-    rightCollision = (x + radius >= paddleLocX - paddleAdjust) &&
-        (x + radius <= 152 - paddleAdjust) &&
+   
+    rightCollision = (x - radius >= paddleLocX - paddleAdjust) &&
+        (x - radius <= (paddleLocX + 2) - paddleAdjust) &&
         -- checks if ball is above paddle (be a bit nice with hitboxes so people don't complain)
         (y - radius >= player1PaddleLoc - paddleRadius) &&
-        -- checks if ball is below baddle
+        -- checks if ball is below paddle
         (y + radius <=  player1PaddleLoc + paddleRadius)
     
-    leftCollision = (x - radius <= -paddleLocX + paddleAdjust) &&
-        (x + radius >= (-152) + paddleAdjust) &&
+    leftCollision = (x + radius <= -paddleLocX + paddleAdjust) &&
+        (x + radius >= (-paddleLocX - 2) + paddleAdjust) &&
         (y - radius >= player2PaddleLoc - paddleRadius) &&
         (y + radius <=  player2PaddleLoc + paddleRadius)
 
