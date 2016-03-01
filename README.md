@@ -18,7 +18,9 @@ cabal init
 
 (here you want to make sure that you mark the program as executable, everything else should take default values)
 
-`cabal install --only-dependencies`
-`cabal run`
+```
+cabal install --only-dependencies
+cabal run
+```
 
 This should allow you to compile + run the main file from source.
