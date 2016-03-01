@@ -10,9 +10,11 @@ To compile this code you'll need to have the full haskell platform installed
 
 navigate to the cloned repo and enter the following
 
-`cabal update`
-`cabal sandbox init`
-`cabal init`
+```
+cabal update
+cabal sandbox init
+cabal init
+```
 
 (here you want to make sure that you mark the program as executable, everything else should take default values)
 
