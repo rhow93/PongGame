@@ -1,0 +1,6 @@
+# Compiled Source # 
+*.config
+*.cabal
+
+# Folders #
+/dist
