@@ -178,25 +178,25 @@ paddleCollision (x, y) game radius = leftCollision || rightCollision
     player1PaddleLoc = player1 game
     player2PaddleLoc = player2 game
     paddleLocX = fromIntegral width / 2
+    
     -- adjust paddle location from 150 to 110
     paddleAdjust = 40
-    radiusOffset = 40
     -- length above / below paddle where we detect collision
     paddleRadius = 60
 
     -- This only detects collisions for the side, not the entire paddle
     -- Offset is 40 because paddles are created at 120, and not 150, which is the width of the screen
     rightCollision = (x + radius >= paddleLocX - paddleAdjust) &&
-        (x + (radius + radiusOffset) <= 152) &&
+        (x + radius <= 152 - paddleAdjust) &&
         -- checks if ball is above paddle (be a bit nice with hitboxes so people don't complain)
-        (y - radius >= player1PaddleLoc - 60) &&
+        (y - radius >= player1PaddleLoc - paddleRadius) &&
         -- checks if ball is below baddle
-        (y + radius <=  player1PaddleLoc + 60)
+        (y + radius <=  player1PaddleLoc + paddleRadius)
     
-    leftCollision = (x - (radius + 40) <= -paddleLocX) &&
-        (x + (radius + 40) >= (-152)) &&
-        (y - radius >= player2PaddleLoc - 60) &&
-        (y + radius <=  player2PaddleLoc + 60)
+    leftCollision = (x - radius <= -paddleLocX + paddleAdjust) &&
+        (x + radius >= (-152) + paddleAdjust) &&
+        (y - radius >= player2PaddleLoc - paddleRadius) &&
+        (y + radius <=  player2PaddleLoc + paddleRadius)
 
 wallCollision :: Position -> Radius -> Bool -- ^ using this alias allows 
 -- our code to be easy to read. This is standard haskell documentation
