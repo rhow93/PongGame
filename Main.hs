@@ -141,9 +141,9 @@ update seconds = (updateKeyPress) .                  -- ^ checks for key presses
                  (paddleBounce . moveBall seconds)   -- ^ checks for paddle collisions
 
 
-goal :: PongGame -> PongGame
+-- the aim of this function is to simplify the update funciton
+-- this could easily be integrated into the update function if need be
 goal = (goalIterate) . (goalScored)
-
 
 {-
 Checks the GoalScored boolean. If this is true then we reset both balls
@@ -344,13 +344,11 @@ updateKeyPress game = game { player1 = x', player2 = y' }
     else if downKey game && player1 game > (-100) then player1 game - 10
     else x
     
--- | The main method
---  This simply calls a simulate function which creates the window,
---  The background color, the number of simulations, an inital
--- state for the game to be in, a function to render, which converts
--- the game state to a picture, and then this is passed to the current viewport
+-- putting the main function in a do bracket to encourage me to do some
+-- concurrent processing (e.g adding sound)
 main :: IO ()
-main = play window background fps initialState render handleKeys update
+main = do
+         play window background fps initialState render handleKeys update
 
 
 
