@@ -38,10 +38,10 @@ data PongGame = Game
   , ball2Vel:: (Float, Float)
   , player1 :: Float          -- ^ Left player paddle height. 
   , player2 :: Float          -- ^ right player paddle height
-  , qKey    :: Bool
-  , aKey    :: Bool
-  , oKey    :: Bool
-  , lKey    :: Bool           -- ^ stores the state of current key press
+  , wKey    :: Bool
+  , sKey    :: Bool
+  , upKey    :: Bool
+  , downKey    :: Bool           -- ^ stores the state of current key press
   , player1Score :: Int
   , player2Score :: Int
 
@@ -101,10 +101,10 @@ initialState = Game
   , ball2Vel = (-50, -100)
   , player1 = 40
   , player2 = 100
-  , qKey = False
-  , aKey = False
-  , oKey = False
-  , lKey = False
+  , wKey = False
+  , sKey = False
+  , upKey = False
+  , downKey = False
   , player1Score = 0
   , player2Score = 0
   }
@@ -234,28 +234,28 @@ wallBounce game = game { ballVel = (vx1, vy1'), ball2Vel = (vx2, vy2') }
 -- | responds to a key event
 handleKeys :: Event -> PongGame -> PongGame
 
-handleKeys (EventKey (Char 'q') _ _ _ ) game =
-  game { qKey = x' }
+handleKeys (EventKey (Char 'w') _ _ _ ) game =
+  game { wKey = x' }
     where
-      x = qKey game
+      x = wKey game
       x' = not x
             
-handleKeys (EventKey (Char 'a') _ _ _ ) game =
-  game { aKey = x'}
+handleKeys (EventKey (Char 's') _ _ _ ) game =
+  game { sKey = x'}
     where 
-      x = aKey game
+      x = sKey game
       x' = not x
   
-handleKeys (EventKey (Char 'o') _ _ _ ) game =
-  game { oKey = x' }
+handleKeys (EventKey (SpecialKey KeyUp) _ _ _ ) game =
+  game { upKey = x' }
     where     
-      x = oKey game
+      x = upKey game
       x' = not x
 
-handleKeys (EventKey (Char 'l') _ _ _ ) game =
-  game { lKey = x'}
+handleKeys (EventKey (SpecialKey KeyDown) _ _ _ ) game =
+  game { downKey = x'}
     where
-      x = lKey game
+      x = downKey game
       x' = not x
       
 -- when you press the s key, reset the ball to the center
@@ -278,12 +278,12 @@ updateKeyPress game = game { player1 = x', player2 = y' }
     x = player1 game
     y = player2 game
     
-    y' = if aKey game && player2 game > (-100) then player2 game - 10
-    else if qKey game && player2 game < 100    then player2 game + 10
+    y' = if sKey game && player2 game > (-100) then player2 game - 10
+    else if wKey game && player2 game < 100    then player2 game + 10
     else y
     
-    x' = if oKey game && player1 game < 100    then player1 game + 10
-    else if lKey game && player1 game > (-100) then player1 game - 10
+    x' = if upKey game && player1 game < 100    then player1 game + 10
+    else if downKey game && player1 game > (-100) then player1 game - 10
     else x
     
 -- | The main method
