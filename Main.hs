@@ -44,6 +44,8 @@ data PongGame = Game
   , downKey    :: Bool           -- ^ stores the state of current key press
   , player1Score :: Int
   , player2Score :: Int
+  , p1GoalScored :: Bool
+  , p2GoalScored :: Bool
 
   } deriving Show
  
@@ -107,6 +109,8 @@ initialState = Game
   , downKey = False
   , player1Score = 0
   , player2Score = 0
+  , p1GoalScored = False
+  , p2GoalScored = False
   }
   
 moveBall :: Float     -- ^ The number of milliseconds since last update
@@ -132,21 +136,72 @@ moveBall seconds game = game { ballLoc = (x', y'), ball2Loc = (x'', y'') }
 -- Ignores viewport argument
 update :: Float -> PongGame -> PongGame
 update seconds = (updateKeyPress) .                  -- ^ checks for key presses, and updates paddle location
-                 (goalScored) .                      -- ^ checks if a goal has been scored
+                 (goal) .                      -- ^ checks if a goal has been scored
                  (wallBounce) .                      -- ^ checks for wall collisions
                  (paddleBounce . moveBall seconds)   -- ^ checks for paddle collisions
 
-goalScored :: PongGame -> PongGame
-goalScored game = game { player1Score = x', player2Score = y'}
+
+goal :: PongGame -> PongGame
+goal = (goalIterate) . (goalScored)
+
+
+{-
+Checks the GoalScored boolean. If this is true then we reset both balls
+to the centre. Both balls are given (0,0) velocity and a score is added
+to the player who scored. The goalscored boolean is then set to false again.
+-}
+goalIterate :: PongGame -> PongGame
+goalIterate game = game 
+  { player1Score = x', 
+    player2Score = y',
+    ballLoc = (ball1X', ball1Y'), 
+    ball2Loc = (ball2X', ball2Y'),
+    ballVel = (ball1XVel', ball1YVel'), 
+    ball2Vel = (ball2XVel', ball2YVel'),
+    p1GoalScored = p1GoalScored',
+    p2GoalScored = p2GoalScored' }
+  
   where
-    
+  
+    -- old values of all possibly changed fields
     x = player1Score game
     y = player2Score game
-    (vx, vy) = ballLoc game
+    (ball1X, ball1Y) = ballLoc game
+    (ball2X, ball2Y) = ball2Loc game
+    (ball1XVel, ball1YVel) = ballVel game
+    (ball2XVel, ball2YVel) = ball2Vel game
+  
+    -- if statements to check for a goal scored & iterate goal score
+    x' = if p1GoalScored game then x + 1 else x
+    y' = if p2GoalScored game then y + 1 else y
+    -- if a goal has been scored, set ball location to (0, 0), else keep in current position
+    (ball1X', ball1Y') = if p1GoalScored game || p2GoalScored game then (0, 0) else (ball1X, ball1Y)
+    (ball2X', ball2Y') = if p1GoalScored game || p2GoalScored game then (0, 0) else (ball2X, ball2Y)
+    -- if a goal has been scored, set ball velocity to (0, 0), else keep current velocity
+    (ball1XVel', ball1YVel') = if p1GoalScored game || p2GoalScored game then (0, 0) else (ball1XVel, ball1YVel)
+    (ball2XVel', ball2YVel') = if p1GoalScored game || p2GoalScored game then (0, 0) else (ball2XVel, ball2YVel)
+    -- if goal has been scored, reset boolean back to false
+    -- not entirely sure if this code is necessary but I'll leave it like this for the moment
+    p1GoalScored' = if p1GoalScored game then False else False
+    p2GoalScored' = if p2GoalScored game then False else False
     
-    x' = if vx < (-150) then x + 1 else x
-    y' = if vx > 150 then y + 1 else y
-
+    
+-- Checks for goal, if a goal has been scored then set goalScored to true
+goalScored :: PongGame -> PongGame
+goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
+  where
+    
+    (vx, vy) = ballLoc game
+    (vx', vy') = ball2Loc game
+    
+    x' = if vx < -(fromIntegral width / 2) then True
+         else if vx' < -(fromIntegral width / 2) then True
+         else False
+    y' = if vx > fromIntegral width / 2 then True 
+         else if vx' > fromIntegral width / 2 then True
+         else False
+         
+         
 -- | This function will detect a collision of the ball with the paddle.
 -- When there is a collision, the velocity of the ball will change to 
 -- bounce it off the paddle
@@ -257,6 +312,9 @@ handleKeys (EventKey (SpecialKey KeyDown) _ _ _ ) game =
     where
       x = downKey game
       x' = not x
+      
+handleKeys (EventKey (SpecialKey KeySpace) _ _ _ ) game =
+  game { ballVel = (90, 50), ball2Vel = (-30, -10) }
       
 -- when you press the s key, reset the ball to the center
 handleKeys (EventKey (Char 'c') _ _ _ ) game =
