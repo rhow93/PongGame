@@ -40,6 +40,8 @@ data PongGame = Game
   , player2 :: Float          -- ^ right player paddle height
   , wKey    :: Bool
   , sKey    :: Bool
+  , akey    :: Bool
+  , dkey    :: Bool
   , upKey    :: Bool
   , downKey    :: Bool           -- ^ stores the state of current key press
   , player1Score :: Int
@@ -105,6 +107,8 @@ initialState = Game
   , player2 = 100
   , wKey = False
   , sKey = False
+  , akey = False
+  , dkey = False
   , upKey = False
   , downKey = False
   , player1Score = 0
@@ -299,6 +303,18 @@ handleKeys (EventKey (Char 's') _ _ _ ) game =
   game { sKey = x'}
     where 
       x = sKey game
+      x' = not x
+      
+handleKeys (EventKey (Char 'a') _ _ _ ) game =
+  game { aKey = x'}
+    where 
+      x = aKey game
+      x' = not x
+      
+handleKeys (EventKey (Char 'd') _ _ _ ) game =
+  game { dKey = x'}
+    where 
+      x = dKey game
       x' = not x
   
 handleKeys (EventKey (SpecialKey KeyUp) _ _ _ ) game =
