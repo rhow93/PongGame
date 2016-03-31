@@ -40,8 +40,6 @@ data PongGame = Game
   , player2 :: Float          -- ^ right player paddle height
   , wKey    :: Bool
   , sKey    :: Bool
-  , akey    :: Bool
-  , dkey    :: Bool
   , upKey    :: Bool
   , downKey    :: Bool           -- ^ stores the state of current key press
   , player1Score :: Int
@@ -107,8 +105,6 @@ initialState = Game
   , player2 = 100
   , wKey = False
   , sKey = False
-  , akey = False
-  , dkey = False
   , upKey = False
   , downKey = False
   , player1Score = 0
@@ -212,22 +208,34 @@ goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
 -- N.B - This should be changed to x collision as it determines a collision
 -- on the X axis.
 paddleBounce :: PongGame -> PongGame
-paddleBounce game = game { ballVel = (vx1', vy1), ball2Vel = (vx2', vy2) }
+paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
   where
     radius = 10
     
     -- the old velocities
     (vx1, vy1) = ballVel game
     (vx2, vy2) = ball2Vel game
+    (bx1, by1) = ballLoc game
+    (bx2, by2) = ball2Loc game
     
-    
+    -- changes x velocity of first ball if there is a collision
     vx1' = if paddleCollision (ballLoc game) game radius 
       then -vx1
       else  vx1
+     
       
+    vy1' = if paddleCollision (ballLoc game) game radius
+      then vy1'
+      else vy1'
+      
+   -- changes x velocity of second ball if there is a collision   
     vx2' = if paddleCollision (ball2Loc game) game radius
       then -vx2
       else  vx2
+      
+    vy2' = if paddleCollision (ball2Loc game) game radius
+      then vy2'
+      else vy2'
        
        
 -- Is there a way of making this more generic, such that it
@@ -305,17 +313,6 @@ handleKeys (EventKey (Char 's') _ _ _ ) game =
       x = sKey game
       x' = not x
       
-handleKeys (EventKey (Char 'a') _ _ _ ) game =
-  game { aKey = x'}
-    where 
-      x = aKey game
-      x' = not x
-      
-handleKeys (EventKey (Char 'd') _ _ _ ) game =
-  game { dKey = x'}
-    where 
-      x = dKey game
-      x' = not x
   
 handleKeys (EventKey (SpecialKey KeyUp) _ _ _ ) game =
   game { upKey = x' }
