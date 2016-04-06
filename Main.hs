@@ -225,8 +225,8 @@ paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
      
       
     vy1' = if paddleCollision (ballLoc game) game radius
-      then vy1'
-      else vy1'
+      then vy1
+      else vy1
       
    -- changes x velocity of second ball if there is a collision   
     vx2' = if paddleCollision (ball2Loc game) game radius
@@ -234,8 +234,8 @@ paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
       else  vx2
       
     vy2' = if paddleCollision (ball2Loc game) game radius
-      then vy2'
-      else vy2'
+      then vy2
+      else vy2
        
        
 -- Is there a way of making this more generic, such that it
