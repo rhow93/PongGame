@@ -12,9 +12,9 @@ import Sound.ALUT hiding (Static)
 loadSound path = do
   -- create a buffer from the sound file
   buf <- createBuffer (File path)
-  souce <- genObjectiveName
+  source <- genObjectName
   buffer source $= Just buf
-  return souce
+  return source
   
 -- loops the music and plays it  
 backgroundMusic :: Source -> IO()
@@ -22,7 +22,7 @@ backgroundMusic source = do
   -- initialise ALUT context
   withProgNameAndArgs runALUT $ \progName args -> do
     loopingMode source $= Looping
-    play [source]
+    Sound.ALUT.play [source]
 
 
 -- GRAPHICS --
@@ -382,7 +382,8 @@ updateKeyPress game = game { player1 = x', player2 = y' }
 -- concurrent processing (e.g adding sound)
 main :: IO ()
 main = do
-         play window background fps initialState render handleKeys update
+         
+         Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
          music <- loadSound "theme.mp3"
          backgroundMusic music
 
