@@ -4,7 +4,28 @@ import Graphics.Gloss
 import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Interface.Pure.Game
 import Graphics.Gloss.Interface.IO.Game
+import Sound.ALUT hiding (Static)
 
+-- SOUND --
+
+-- load sound
+loadSound path = do
+  -- create a buffer from the sound file
+  buf <- createBuffer (File path)
+  souce <- genObjectiveName
+  buffer source $= Just buf
+  return souce
+  
+-- loops the music and plays it  
+backgroundMusic :: Source -> IO()
+backgroundMusic source = do
+  -- initialise ALUT context
+  withProgNameAndArgs runALUT $ \progName args -> do
+    loopingMode source $= Looping
+    play [source]
+
+
+-- GRAPHICS --
 
 width, height, offset, fps :: Int
 width = 500
@@ -362,6 +383,8 @@ updateKeyPress game = game { player1 = x', player2 = y' }
 main :: IO ()
 main = do
          play window background fps initialState render handleKeys update
+         music <- loadSound "theme.mp3"
+         backgroundMusic music
 
 
 
