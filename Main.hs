@@ -4,6 +4,9 @@ import Graphics.Gloss
 import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Interface.Pure.Game
 import Graphics.Gloss.Interface.IO.Game
+import Control.Monad
+import Control.Monad.Fix
+import Control.Concurrent
 import Sound.ALUT hiding (Static)
 
 -- SOUND --
@@ -20,9 +23,10 @@ loadSound path = do
 backgroundMusic :: Source -> IO()
 backgroundMusic source = do
   -- initialise ALUT context
-  withProgNameAndArgs runALUT $ \progName args -> do
+  withProgNameAndArgs runALUT $ \_ _ -> do
     loopingMode source $= Looping
     Sound.ALUT.play [source]
+
 
 
 -- GRAPHICS --
@@ -377,15 +381,16 @@ updateKeyPress game = game { player1 = x', player2 = y' }
     x' = if upKey game && player1 game < 100    then player1 game + 10
     else if downKey game && player1 game > (-100) then player1 game - 10
     else x
+ 
     
--- putting the main function in a do bracket to encourage me to do some
--- concurrent processing (e.g adding sound)
+-- N.B THIS DOESN'T COMPILE DUE TO INCORRECT TYPES PASSED TO FORKIO
 main :: IO ()
 main = do
-         
-         Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
-         music <- loadSound "theme.mp3"
-         backgroundMusic music
+
+    Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
+    forkIO (do
+        music <- loadSound "sounds/theme.wav"
+        backgroundMusic music)
 
 
 
