@@ -11,6 +11,22 @@ import Sound.ALUT hiding (Static)
 
 -- SOUND --
 
+playBackground :: IO ()
+playBackground =
+  withProgNameAndArgs runALUTUsingCurrentContext $ \_ _ ->
+  do
+    (Just device) <- openDevice Nothing
+    (Just context) <- createContext device []
+    currentContext $= Just context
+    buffer1 <- createBuffer $ Sine 440 0 1
+    buffer2 <- createBuffer HelloWorld
+    [source] <- genObjectNames 1
+    queueBuffers source [buffer1, buffer2]
+    Sound.ALUT.play[source]
+    sleep 4
+    closeDevice device
+    return ()
+
 -- load sound
 loadSound path = do
   -- create a buffer from the sound file
@@ -386,11 +402,9 @@ updateKeyPress game = game { player1 = x', player2 = y' }
 -- N.B THIS DOESN'T COMPILE DUE TO INCORRECT TYPES PASSED TO FORKIO
 main :: IO ()
 main = do
-
+    playBackground
     Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
-    forkIO (do
-        music <- loadSound "sounds/theme.wav"
-        backgroundMusic music)
+    playBackground
 
 
 
