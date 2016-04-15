@@ -46,6 +46,10 @@ backgroundMusic source = do
 
 
 -- GRAPHICS --
+{- 
+   It is important to know that the the (0,0) coordinate is the centre
+   of the screen and anything drawn on the screen is done relative to this
+-}
 
 width, height, offset, fps :: Int
 width = 500
@@ -53,16 +57,26 @@ height = 300
 offset = 100
 fps = 60
 
-paddleWidth, paddleHeight, paddleBorderWidth, paddleBorderHeight :: Float
+ballRadius :: Radius
+ballRadius = 10
+
+-- widths and height of paddle, note the paddle collisions interact
+paddleWidth, paddleHeight, paddleBorderWidth, paddleBorderHeight, playerXVal :: Float
 paddleWidth = 20
 paddleHeight = 80
 paddleBorderWidth = paddleWidth + 6
 paddleBorderHeight = paddleHeight + 6
-playerXVal :: Float
+
+-- the X location of each player, this means the player x value scales
+-- with the width of the window
 playerXVal = (fromIntegral width / 2) - 30 
 
+{-
+InWindow String (Int, Int) (Int, Int)	
+Display in a window with the given name, size and position.
+-}
 window :: Display
-window = InWindow "Pong" (600, height + 300) (offset, offset) 
+window = InWindow "Pong" (width, height + 300) (offset, offset) 
 
 background :: Color
 background = black
@@ -107,10 +121,10 @@ render game =
     -- The pong ball.
     -- the uncurry keyword is the process of taking a function with a single 
     -- argument and converting these into multiple arguments. 
-    ball = uncurry translate (ballLoc game) $ color ballColor $ circleSolid 10
+    ball = uncurry translate (ballLoc game) $ color ballColor $ circleSolid ballRadius
     ballColor = dark red
     
-    ball2 = uncurry translate (ball2Loc game) $ color ball2Color $ circleSolid 10
+    ball2 = uncurry translate (ball2Loc game) $ color ball2Color $ circleSolid ballRadius
     ball2Color = dark blue
     
     
@@ -123,12 +137,12 @@ render game =
           rectangleSolid 670 10
     
     wallColor = greyN 0.5
-    walls = pictures [wall 150, wall (-150)]
+    walls = pictures [wall (fromIntegral height/2), wall (-fromIntegral height/2)]
     
     -- shows the score on screen 
-    score1 = translate 200 (-270) $ color score $ Text $ show (player1Score game)
-    score2 = translate (-200) (-270) $ color score $ Text $ show (player2Score game)
-    dash = translate 0 (-270) $ color score $ Text "-"
+    score1 = translate ((fromIntegral width/2) - 100) (-fromIntegral height) $ color score $ Text $ show (player1Score game)
+    score2 = translate ((-fromIntegral width/2) ) (-fromIntegral height) $ color score $ Text $ show (player2Score game)
+    dash = translate (-50) (-fromIntegral height) $ color score $ Text "-"
     
     -- Make a paddle of a given border and vertical offset
     mkPaddle :: Color -> Float -> Float -> Picture
@@ -342,22 +356,22 @@ wallCollision (_, y) radius = topCollision || bottomCollision
 wallBounce :: PongGame -> PongGame
 wallBounce game = game { ballVel = (vx1, vy1'), ball2Vel = (vx2, vy2') }
   where
-    -- radius. using the same thing as in `render`.
-    radius = 10    
+   
     -- The old velocities
     (vx1, vy1) = ballVel game
     (vx2, vy2) = ball2Vel game 
     
     -- if there is a collision, flip y vel, else don't
-    vy1' = if wallCollision (ballLoc game) radius
+    vy1' = if wallCollision (ballLoc game) ballRadius
       then -vy1 
       else vy1
         
-    vy2' = if wallCollision (ball2Loc game) radius
+    vy2' = if wallCollision (ball2Loc game) ballRadius
       then -vy2
       else vy2
 
--- | responds to a key event
+-- KEYBOARD INTERACTION --
+
 handleKeys :: Event -> PongGame -> PongGame
 
 handleKeys (EventKey (Char 'w') _ _ _ ) game =
@@ -372,7 +386,6 @@ handleKeys (EventKey (Char 's') _ _ _ ) game =
       x = sKey game
       x' = not x
       
-  
 handleKeys (EventKey (SpecialKey KeyUp) _ _ _ ) game =
   game { upKey = x' }
     where     
@@ -388,7 +401,6 @@ handleKeys (EventKey (SpecialKey KeyDown) _ _ _ ) game =
 handleKeys (EventKey (SpecialKey KeySpace) _ _ _ ) game =
   game { ballVel = (90, 50), ball2Vel = (-30, -10) }
       
--- when you press the s key, reset the ball to the center
 handleKeys (EventKey (Char 'c') _ _ _ ) game =
   game { ballLoc = (0, 0) }
   
@@ -416,13 +428,10 @@ updateKeyPress game = game { player1 = x', player2 = y' }
     else if downKey game && player1 game > (-100) then player1 game - 10
     else x
  
-    
--- N.B THIS DOESN'T COMPILE DUE TO INCORRECT TYPES PASSED TO FORKIO
+
 main :: IO ()
 main = do
-    playBackground
     Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
-    playBackground
 
 
 
