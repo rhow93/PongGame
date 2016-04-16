@@ -61,12 +61,12 @@ ballRadius :: Radius
 ballRadius = 10
 
 -- widths and height of paddle, note the paddle collisions interact
-paddleWidth, paddleHeight, paddleBorderWidth, paddleBorderHeight, playerXVal :: Float
-paddleWidth = 20
-paddleHeight = 80
-paddleBorderWidth = paddleWidth + 6
-paddleBorderHeight = paddleHeight + 6
-
+paddleWidth, paddleHeight, paddleBorderWidth, paddleBorderHeight, playerXVal, wallDepth :: Float
+paddleWidth = paddleBorderWidth - 6
+paddleHeight = paddleBorderHeight - 6
+paddleBorderWidth = 20
+paddleBorderHeight = 80
+wallDepth = 10
 -- the X location of each player, this means the player x value scales
 -- with the width of the window
 playerXVal = (fromIntegral width / 2) - 30 
@@ -134,7 +134,7 @@ render game =
     wall offset = 
       translate 0 offset $
         color wallColor $
-          rectangleSolid 670 10
+          rectangleSolid (fromIntegral width) wallDepth
     
     wallColor = greyN 0.5
     walls = pictures [wall (fromIntegral height/2), wall (-fromIntegral height/2)]
@@ -262,7 +262,7 @@ goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
          else False
          
 yVelocityMultiplier :: Float -> Float -> Float
-yVelocityMultiplier ball_y racket_y = ((ball_y - racket_y) / 60) - 50 
+yVelocityMultiplier ball_y racket_y = ((ball_y - racket_y) / 60) * 50 
          
 -- | This function will detect a collision of the ball with the paddle.
 -- When there is a collision, the velocity of the ball will change to 
@@ -272,8 +272,6 @@ yVelocityMultiplier ball_y racket_y = ((ball_y - racket_y) / 60) - 50
 paddleBounce :: PongGame -> PongGame
 paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
   where
-    radius = 10
-    
     -- the old velocities
     (vx1, vy1) = ballVel game
     (vx2, vy2) = ball2Vel game
@@ -283,19 +281,29 @@ paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
     paddle2Loc = player2 game
     
     -- changes x velocity of first ball if there is a collision
-    (vx1', vy1') =  if leftPaddleCollision (ballLoc game) game radius 
+    (vx1', vy1') =  if leftPaddleCollision (ballLoc game) game ballRadius 
+      -- then (-vx1, yVelocityMultiplier paddle2Loc vy1)
       then (-vx1, vy1)
-      else  if rightPaddleCollision (ballLoc game) game radius
+      else  if rightPaddleCollision (ballLoc game) game ballRadius
+      -- then (-vx1, yVelocityMultiplier paddle1Loc vy1)
       then (-vx1, vy1)
       else (vx1, vy1)
      
       
    -- changes x velocity of second ball if there is a collision   
-    (vx2', vy2') = if leftPaddleCollision (ball2Loc game) game radius
+    (vx2', vy2') = if leftPaddleCollision (ball2Loc game) game ballRadius
       then (-vx2, vy2)
-      else if rightPaddleCollision (ball2Loc game) game radius
+      else if rightPaddleCollision (ball2Loc game) game ballRadius
       then (-vx2, vy2)
       else  (vx2, vy2)
+
+{-
+IMPORTANT THINGS TO NOTE:
+playerXVal is the xvalue of each player, where p1 is drawn on the right
+and player 2 is drawn on the left.
+the ball radius is 10.
+-}
+
 
 -- Need to create a paddle collision function for each paddle
 leftPaddleCollision :: Position -> PongGame -> Radius -> Bool
@@ -304,18 +312,15 @@ leftPaddleCollision (x, y) game radius = leftCollision
     -- x is the x value of the the ball 
     -- game is the PongGame game state
     -- radius is the radius the ball (10)
+    -- therefore playerXVal is 220
     
-    player1PaddleLoc = player1 game
     player2PaddleLoc = player2 game
-    paddleLocX = fromIntegral width / 2
-    
-    -- adjust paddle location
-    paddleAdjust = 60
+
     -- length above / below paddle where we detect collision
     paddleRadius = 60
     
-    leftCollision = (x + radius <= -paddleLocX + paddleAdjust) &&
-        (x + radius >= (-paddleLocX - 2) + paddleAdjust) &&
+    leftCollision = (x - radius <= -playerXVal) &&
+        (x - radius >= (-playerXVal - 2)) &&
         (y - radius >= player2PaddleLoc - paddleRadius) &&
         (y + radius <=  player2PaddleLoc + paddleRadius)
         
@@ -324,28 +329,22 @@ rightPaddleCollision (x, y) game radius = rightCollision
   where
     
     player1PaddleLoc = player1 game
-    player2PaddleLoc = player2 game
-    paddleLocX = fromIntegral width / 2
     
-    -- adjust paddle location
-    paddleAdjust = 60
     -- length above / below paddle where we detect collision
     paddleRadius = 60
     
-    rightCollision = (x - radius >= paddleLocX - paddleAdjust) &&
-        (x - radius <= (paddleLocX + 2) - paddleAdjust) &&
+    rightCollision = (x + radius >= playerXVal) &&
+        (x + radius <= (playerXVal + 2)) &&
         -- checks if ball is above paddle (be a bit nice with hitboxes so people don't complain)
         (y - radius >= player1PaddleLoc - paddleRadius) &&
         -- checks if ball is below paddle
         (y + radius <=  player1PaddleLoc + paddleRadius)
 
   
-wallCollision :: Position -> Radius -> Bool -- ^ using this alias allows 
--- our code to be easy to read. This is standard haskell documentation
+wallCollision :: Position -> Radius -> Bool 
 wallCollision (_, y) radius = topCollision || bottomCollision
   where 
-    -- ^ You cannot directly compare a float and an int, so we use fromIntegral
-    -- which allows us to convert an Int to a float.
+
     topCollision = y - radius <= -fromIntegral height / 2 
     bottomCollision = y + radius >= fromIntegral height / 2
 
