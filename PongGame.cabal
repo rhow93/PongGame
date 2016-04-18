@@ -4,11 +4,11 @@
 name:                PongGame
 version:             0.1.0.0
 -- synopsis:            
--- description:         
+-- description:      A Pong Game written by a 3rd year student at Swansea University   
 -- license:             
 license-file:        LICENSE
--- author:              
--- maintainer:          
+author:              Rory How
+maintainer:          rhow93@gmail.com
 -- copyright:           
 -- category:            
 build-type:          Simple
@@ -16,9 +16,42 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 executable PongGame
-  main-is:             Main.hs
+  main-is:             Main.hs    
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base >=4.7 && <4.9,  gloss==1.9.*, ALUT
+  build-depends:       base >=4.8 && <4.9, gloss >=1.9 && <1.10, ALUT >=2.4 && <2.5
   -- hs-source-dirs:      
   default-language:    Haskell2010
+
+executable SoundExample
+  main-is:             PlaySound.hs  
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.8 && <4.9, gloss >=1.9 && <1.10, ALUT >=2.4 && <2.5
+  -- hs-source-dirs:      
+  default-language:    Haskell2010
+
+executable BasicPicture
+  main-is:             BasicPicture.hs    
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.8 && <4.9, gloss >=1.9 && <1.10, ALUT >=2.4 && <2.5
+  -- hs-source-dirs:      
+  default-language:    Haskell2010
+
+executable BasicAnimation
+  main-is:             BasicAnimation.hs    
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.8 && <4.9, gloss >=1.9 && <1.10, ALUT >=2.4 && <2.5
+  -- hs-source-dirs:      
+  default-language:    Haskell2010
+
+executable 2BallsPure
+  main-is:             2BallsPure.hs    
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.8 && <4.9, gloss >=1.9 && <1.10, ALUT >=2.4 && <2.5
+  -- hs-source-dirs:      
+  default-language:    Haskell2010
+  
