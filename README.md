@@ -13,14 +13,30 @@ navigate to the cloned repo and enter the following
 ```
 cabal update
 cabal sandbox init
-cabal init
 ```
 
 (here you want to make sure that you mark the program as executable, everything else should take default values)
 
 ```
 cabal install --only-dependencies
-cabal run
+cabal build
 ```
 
 This should allow you to compile + run the main file from source.
+
+You will need OpenGL and OpenAL/ALUT install for this program to run on your system.
+
+The game is confirmed to work on Ubuntu distributions, and should theoretically work on Windows/Mac.
+
+#GAME EXAMPLES
+
+There are 5 different examples, highlighting the development process of the game.
+
+you can run each of these with the following commands:
+
+`cabal run BasicPicture`
+`cabal run BasicAnimation`
+`cabal run SoundExample`
+`cabal run 2BallsPure`
+`cabal run PongGame`
+
