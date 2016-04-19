@@ -34,9 +34,11 @@ There are 5 different examples, highlighting the development process of the game
 
 you can run each of these with the following commands:
 
-`cabal run BasicPicture`
-`cabal run BasicAnimation`
-`cabal run SoundExample`
-`cabal run 2BallsPure`
-`cabal run PongGame`
+```
+cabal run BasicPicture
+cabal run BasicAnimation
+cabal run SoundExample
+cabal run 2BallsPure
+cabal run PongGame
+```
 
