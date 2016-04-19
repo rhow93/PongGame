@@ -21,29 +21,10 @@ playSound =
     buffer3 <- createBuffer $ File "sounds/theme.wav"
     [source] <- genObjectNames 1
     buffer source $= Just buffer3
-    Sound.ALUT.play [source]
-    sleep 4
-    closeDevice device
-    return ()
-    
--- load sound
-loadSound path = do
-  -- create a buffer from the sound file
-  buf <- createBuffer (File path)
-  source <- genObjectName
-  buffer source $= Just buf
-  return source
-  
--- loops the music and plays it  
-backgroundMusic :: Source -> IO()
-backgroundMusic source = do
-  -- initialise ALUT context
-  withProgNameAndArgs runALUT $ \_ _ -> do
     loopingMode source $= Looping
     Sound.ALUT.play [source]
-
-
-
+    
+    
 -- GRAPHICS --
 {- 
    It is important to know that the the (0,0) coordinate is the centre
@@ -151,7 +132,6 @@ render game =
       ]
       
     paddleColor = light (light blue)
-
     
 -- | Initialise the game with this game state
 initialState :: PongGame
@@ -190,7 +170,8 @@ moveBall seconds game = game { ballLoc = (x', y'), ball2Loc = (x'', y'') }
     
     x'' = xOld + vx' * seconds * 2
     y'' = yOld + vy' * seconds * 2
-    
+
+                                 
 -- | Update the game by moving the ball
 -- Ignores viewport argument
 update :: Float -> PongGame -> PongGame
@@ -408,6 +389,7 @@ handleKeys (EventKey (Char 'v') _ _ _) game =
 -- Do nothing for all other events.  
 handleKeys _ game = game
 
+
 -- checks if any keys are being pressed and updates the corresponding
 -- player position
 updateKeyPress :: PongGame -> PongGame
@@ -430,8 +412,9 @@ updateKeyPress game = game { player1 = x', player2 = y' }
 main :: IO ()
 main = do
 
+    forkIO playSound 
     Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
-    forkIO playSound
+    
 
 
 
