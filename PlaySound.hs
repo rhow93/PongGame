@@ -1,5 +1,5 @@
 import Control.Monad
-import Sound.ALUT hiding (Static, direction)
+import Sound.ALUT
 
 playSound :: IO ()
 playSound =
@@ -8,10 +8,9 @@ playSound =
     (Just device) <- openDevice Nothing
     (Just context) <- createContext device []
     currentContext $= Just context
-    buffer1 <- createBuffer $ Sine 440 0 1
-    buffer2 <- createBuffer HelloWorld
+    buffer3 <- createBuffer $ File "sounds/theme.wav"
     [source] <- genObjectNames 1
-    queueBuffers source [buffer1,buffer2]
+    buffer source $= Just buffer3
     play [source]
     sleep 4
     closeDevice device
