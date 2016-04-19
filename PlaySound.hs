@@ -1,5 +1,5 @@
 import Control.Monad
-import Sound.ALUT
+import Sound.ALUT hiding (Static, direction)
 
 playSound :: IO ()
 playSound =

@@ -430,7 +430,11 @@ updateKeyPress game = game { player1 = x', player2 = y' }
 
 main :: IO ()
 main = do
+
+    music <- loadSound "sounds/theme.wav"
+    
     Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
+    forkIO backgroundMusic music
 
 
 
