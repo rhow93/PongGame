@@ -31,21 +31,21 @@ playSound =
    of the screen and anything drawn on the screen is done relative to this
 -}
 
-width, height, offset, fps :: Int
+width, height, windowOffset, fps :: Int
 width = 500
 height = 300
-offset = 100
+windowOffset = 100
 fps = 60
 
 ballRadius :: Radius
-ballRadius = 10
+ballRadius = 5
 
 -- widths and height of paddle, note the paddle collisions interact
 paddleWidth, paddleHeight, paddleBorderWidth, paddleBorderHeight, playerXVal, wallDepth :: Float
 paddleWidth = paddleBorderWidth - 6
 paddleHeight = paddleBorderHeight - 6
 paddleBorderWidth = 20
-paddleBorderHeight = 80
+paddleBorderHeight = 60
 wallDepth = 10
 -- the X location of each player, this means the player x value scales
 -- with the width of the window
@@ -56,7 +56,7 @@ InWindow String (Int, Int) (Int, Int)
 Display in a window with the given name, size and position.
 -}
 window :: Display
-window = InWindow "Pong" (width, height + 300) (offset, offset) 
+window = InWindow "Pong" (width, height + 300) (windowOffset, windowOffset) 
 
 background :: Color
 background = black
@@ -111,8 +111,8 @@ render game =
     -- wall length was previously 270
     -- The bottom and top walls
     wall :: Float -> Picture
-    wall offset = 
-      translate 0 offset $
+    wall wallOffset = 
+      translate 0 wallOffset $
         color wallColor $
           rectangleSolid (fromIntegral width) wallDepth
     
@@ -242,7 +242,7 @@ goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
          else False
          
 yVelocityMultiplier :: Float -> Float -> Float
-yVelocityMultiplier ball_y racket_y = ((ball_y - racket_y) / 60) * 50 
+yVelocityMultiplier ball_y racket_y = (ball_y - racket_y)
          
 -- | This function will detect a collision of the ball with the paddle.
 -- When there is a collision, the velocity of the ball will change to 
@@ -262,17 +262,18 @@ paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
     
     -- changes x velocity of first ball if there is a collision
     (vx1', vy1') =  if leftPaddleCollision (ballLoc game) game ballRadius 
-      -- then (-vx1, yVelocityMultiplier paddle2Loc vy1)
-      then (-vx1, vy1)
+      then (-vx1, yVelocityMultiplier paddle1Loc vy1)
+      --then (-vx1, vy1)
       else  if rightPaddleCollision (ballLoc game) game ballRadius
-      -- then (-vx1, yVelocityMultiplier paddle1Loc vy1)
-      then (-vx1, vy1)
+      then (-vx1, yVelocityMultiplier paddle2Loc vy1)
+      --then (-vx1, vy1)
       else (vx1, vy1)
      
       
    -- changes x velocity of second ball if there is a collision   
     (vx2', vy2') = if leftPaddleCollision (ball2Loc game) game ballRadius
       then (-vx2, vy2)
+      -- then (-vx2, yVelocityMultiplier vy2 paddle2Loc)
       else if rightPaddleCollision (ball2Loc game) game ballRadius
       then (-vx2, vy2)
       else  (vx2, vy2)
@@ -297,12 +298,16 @@ leftPaddleCollision (x, y) game radius = leftCollision
     player2PaddleLoc = player2 game
 
     -- length above / below paddle where we detect collision
-    paddleRadius = 60
+    paddleRadius = paddleBorderHeight / 2
     
-    leftCollision = (x - radius <= -playerXVal) &&
-        (x - radius >= (-playerXVal - 2)) &&
-        (y - radius >= player2PaddleLoc - paddleRadius) &&
-        (y + radius <=  player2PaddleLoc + paddleRadius)
+    -- the -10 takes into account that the paddle is drawn from the centre
+    -- therefore there is 10 distance either side that is not accounted for
+    xOffset = radius + (paddleBorderWidth / 2)
+    
+    leftCollision = (x - xOffset <= -playerXVal) &&
+        (x - xOffset >= (-playerXVal - radius)) &&
+        (y + radius >= player2PaddleLoc - paddleRadius) &&
+        (y - radius <=  player2PaddleLoc + paddleRadius)
         
 rightPaddleCollision :: Position -> PongGame -> Radius -> Bool
 rightPaddleCollision (x, y) game radius = rightCollision
@@ -311,14 +316,16 @@ rightPaddleCollision (x, y) game radius = rightCollision
     player1PaddleLoc = player1 game
     
     -- length above / below paddle where we detect collision
-    paddleRadius = 60
+    paddleRadius = paddleBorderHeight / 2
     
-    rightCollision = (x + radius >= playerXVal) &&
-        (x + radius <= (playerXVal + 2)) &&
+    xOffset = radius + (paddleBorderWidth / 2)
+    
+    rightCollision = (x + xOffset >= playerXVal) &&
+        (x + xOffset <= (playerXVal + radius)) &&
         -- checks if ball is above paddle (be a bit nice with hitboxes so people don't complain)
-        (y - radius >= player1PaddleLoc - paddleRadius) &&
+        (y + radius >= player1PaddleLoc - paddleRadius) &&
         -- checks if ball is below paddle
-        (y + radius <=  player1PaddleLoc + paddleRadius)
+        (y - radius <=  player1PaddleLoc + paddleRadius)
 
   
 wallCollision :: Position -> Radius -> Bool 
@@ -378,7 +385,7 @@ handleKeys (EventKey (SpecialKey KeyDown) _ _ _ ) game =
       x' = not x
       
 handleKeys (EventKey (SpecialKey KeySpace) _ _ _ ) game =
-  game { ballVel = (90, 50), ball2Vel = (-30, -10) }
+  game { ballVel = (90, 50), ball2Vel = (0, 0) }
       
 handleKeys (EventKey (Char 'c') _ _ _ ) game =
   game { ballLoc = (0, 0) }
@@ -400,19 +407,21 @@ updateKeyPress game = game { player1 = x', player2 = y' }
     x = player1 game
     y = player2 game
     
-    y' = if sKey game && player2 game > (-100) then player2 game - 10
-    else if wKey game && player2 game < 100    then player2 game + 10
+    upperBoundary = (fromIntegral height/2) - (paddleBorderHeight / 2) -- - (wallDepth / 2)
+    lowerBoundary =  -(fromIntegral height/2) + (paddleBorderHeight / 2)-- + (wallDepth / 2)
+    
+    y' = if sKey game && player2 game > lowerBoundary then player2 game - 10
+    else if wKey game && player2 game < upperBoundary    then player2 game + 10
     else y
     
-    x' = if upKey game && player1 game < 100    then player1 game + 10
-    else if downKey game && player1 game > (-100) then player1 game - 10
+    x' = if upKey game && player1 game < upperBoundary    then player1 game + 10
+    else if downKey game && player1 game > lowerBoundary then player1 game - 10
     else x
  
 
 main :: IO ()
 main = do
-
-    forkIO playSound 
+    -- forkIO playSound 
     Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
     
 
