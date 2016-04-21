@@ -1,11 +1,7 @@
 module Main(main) where
 
 import Graphics.Gloss
-import Graphics.Gloss.Data.ViewPort
 import Graphics.Gloss.Interface.Pure.Game
-import Graphics.Gloss.Interface.IO.Game
-import Control.Monad
-import Control.Monad.Fix
 import Control.Concurrent
 import Sound.ALUT hiding (Static)
 
@@ -125,11 +121,13 @@ render game =
     
     -- create a small height offset value to lift the score values from the bottom
     heightOffset = 10
+    score1XOffset = 100 
+    dashXOffset = -50
     
     -- shows the score on screen 
-    score1 = translate ((fromIntegral width/2) - 100) (-fromIntegral height + heightOffset) $ color score $ Text $ show (player1Score game)
+    score1 = translate ((fromIntegral width/2) - score1XOffset) (-fromIntegral height + heightOffset) $ color score $ Text $ show (player1Score game)
     score2 = translate ((-fromIntegral width/2) ) (-fromIntegral height + heightOffset) $ color score $ Text $ show (player2Score game)
-    dash = translate (-50) (-fromIntegral height) $ color score $ Text "-"
+    dash = translate (dashXOffset) (-fromIntegral height) $ color score $ Text "-"
     
     -- Make a paddle of a given border and vertical offset
     mkPaddle :: Color -> Float -> Float -> Picture
@@ -188,8 +186,9 @@ update seconds = (updateKeyPress) .                  -- ^ checks for key presses
                  (paddleBounce . moveBall seconds)   -- ^ checks for paddle collisions
 
 
--- the aim of this function is to simplify the update funciton
--- this could easily be integrated into the update function if need be
+-- | the aim of this function is to simplify the update funciton
+--   this could easily be integrated into the update function if need be
+goal :: PongGame -> PongGame
 goal = (goalIterate) . (goalScored)
 
 
@@ -237,8 +236,8 @@ goalScored :: PongGame -> PongGame
 goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
   where
     
-    (vx, vy) = ballLoc game
-    (vx', vy') = ball2Loc game
+    (vx, _) = ballLoc game
+    (vx', _) = ball2Loc game
     
     x' = if vx < -(fromIntegral width / 2) then True
          else if vx' < -(fromIntegral width / 2) then True
@@ -267,8 +266,8 @@ paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
     -- the old velocities
     (vx1, vy1) = ballVel game
     (vx2, vy2) = ball2Vel game
-    (bx1, by1) = ballLoc game
-    (bx2, by2) = ball2Loc game
+    (_, by1) = ballLoc game
+    (_, by2) = ball2Loc game
     paddle1Loc = player1 game
     paddle2Loc = player2 game
     
