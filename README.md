@@ -41,4 +41,10 @@ cabal run SoundExample
 cabal run 2BallsPure
 cabal run PongGame
 ```
+#DOCUMENTATION
 
+The Main.hs file has been developed with a Haddock commenting style in mind. Because of this you can generate the documentation for the project at compile time using the following commands:
+
+```
+cabal haddock --internal --executables
+```
