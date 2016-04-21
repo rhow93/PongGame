@@ -123,9 +123,12 @@ render game =
     wallColor = greyN 0.5
     walls = pictures [wall (fromIntegral height/2), wall (-fromIntegral height/2)]
     
+    -- create a small height offset value to lift the score values from the bottom
+    heightOffset = 10
+    
     -- shows the score on screen 
-    score1 = translate ((fromIntegral width/2) - 100) (-fromIntegral height) $ color score $ Text $ show (player1Score game)
-    score2 = translate ((-fromIntegral width/2) ) (-fromIntegral height) $ color score $ Text $ show (player2Score game)
+    score1 = translate ((fromIntegral width/2) - 100) (-fromIntegral height + heightOffset) $ color score $ Text $ show (player1Score game)
+    score2 = translate ((-fromIntegral width/2) ) (-fromIntegral height + heightOffset) $ color score $ Text $ show (player2Score game)
     dash = translate (-50) (-fromIntegral height) $ color score $ Text "-"
     
     -- Make a paddle of a given border and vertical offset
@@ -141,9 +144,9 @@ render game =
 initialState :: PongGame
 initialState = Game
   { ballLoc = (0, 0)
-  , ballVel = (50, 100)
+  , ballVel = (80, 100)
   , ball2Loc = (0, 0)
-  , ball2Vel = (0, 0)
+  , ball2Vel = (-80, -50)
   , player1 = 40
   , player2 = 100
   , wKey = False
@@ -246,9 +249,11 @@ goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
 
 
 -- | checks where the ball collided with the paddle and changes the y
---   velocity of the ball according to this.         
+--   velocity of the ball according to this. 
+--   As it stands currently the y velocity can be a maximum of 30 and
+--   minimum of -30.        
 yVelocityMultiplier :: Float -> Float -> Float
-yVelocityMultiplier ball_y racket_y = (ball_y - racket_y)
+yVelocityMultiplier ball_y racket_y = ((ball_y - racket_y) / 30) * 100
          
 
 -- | This function will detect a collision of the ball with the paddle.
@@ -269,20 +274,21 @@ paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
     
     -- changes x velocity of first ball if there is a collision
     (vx1', vy1') =  if leftPaddleCollision (ballLoc game) game ballRadius 
-      --then (-vx1, yVelocityMultiplier paddle1Loc vy1)
-      then (-vx1, vy1)
+      then (-vx1, yVelocityMultiplier by1 paddle2Loc)
+      --then (-vx1, vy1)
       else  if rightPaddleCollision (ballLoc game) game ballRadius
-      --then (-vx1, yVelocityMultiplier paddle2Loc vy1)
-      then (-vx1, vy1)
+      then (-vx1, yVelocityMultiplier by1 paddle1Loc)
+      --then (-vx1, vy1)
       else (vx1, vy1)
      
       
    -- changes x velocity of second ball if there is a collision   
     (vx2', vy2') = if leftPaddleCollision (ball2Loc game) game ballRadius
-      then (-vx2, vy2)
-      -- then (-vx2, yVelocityMultiplier vy2 paddle2Loc)
+      --then (-vx2, vy2)
+      then (-vx2, yVelocityMultiplier by2 paddle2Loc)
       else if rightPaddleCollision (ball2Loc game) game ballRadius
-      then (-vx2, vy2)
+      --then (-vx2, vy2)
+      then (-vx2, yVelocityMultiplier by2 paddle1Loc)
       else  (vx2, vy2)
 
 {-
@@ -402,7 +408,7 @@ handleKeys (EventKey (SpecialKey KeyDown) _ _ _ ) game =
       x' = not x
       
 handleKeys (EventKey (SpecialKey KeySpace) _ _ _ ) game =
-  game { ballVel = (90, 50), ball2Vel = (0, 0) }
+  game { ballVel = (90, 50), ball2Vel = (-60, 50) }
       
 handleKeys (EventKey (Char 'c') _ _ _ ) game =
   game { ballLoc = (0, 0) }
