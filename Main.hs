@@ -11,6 +11,10 @@ import Sound.ALUT hiding (Static)
 
 -- SOUND --
 
+-- | Plays a sound permanently until the program has terminated
+--   The sound does not need to be attached to a context to be initialised
+--   which means that it can run in it's own thread without needing to be
+--   interacted with.
 playSound :: IO ()
 playSound =
   withProgNameAndArgs runALUTUsingCurrentContext $ \_ _ ->
@@ -51,10 +55,10 @@ wallDepth = 10
 -- with the width of the window
 playerXVal = (fromIntegral width / 2) - 30 
 
-{-
-InWindow String (Int, Int) (Int, Int)	
-Display in a window with the given name, size and position.
--}
+
+-- | InWindow String (Int, Int) (Int, Int)	
+--   Display in a window with the given name, size and position.
+
 window :: Display
 window = InWindow "Pong" (width, height + 300) (windowOffset, windowOffset) 
 
@@ -185,11 +189,10 @@ update seconds = (updateKeyPress) .                  -- ^ checks for key presses
 -- this could easily be integrated into the update function if need be
 goal = (goalIterate) . (goalScored)
 
-{-
-Checks the GoalScored boolean. If this is true then we reset both balls
-to the centre. Both balls are given (0,0) velocity and a score is added
-to the player who scored. The goalscored boolean is then set to false again.
--}
+
+-- | Checks the GoalScored boolean. If this is true then we reset both balls
+--   to the centre. Both balls are given (0,0) velocity and a score is added
+--   to the player who scored. The goalscored boolean is then set to false again.
 goalIterate :: PongGame -> PongGame
 goalIterate game = game 
   { player1Score = x', 
@@ -226,7 +229,7 @@ goalIterate game = game
     p2GoalScored' = if p2GoalScored game then False else False
     
     
--- Checks for goal, if a goal has been scored then set goalScored to true
+-- | Checks for goal, if a goal has been scored then set goalScored to true
 goalScored :: PongGame -> PongGame
 goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
   where
@@ -240,10 +243,14 @@ goalScored game = game { p1GoalScored = x', p2GoalScored = y'}
     y' = if vx > fromIntegral width / 2 then True 
          else if vx' > fromIntegral width / 2 then True
          else False
-         
+
+
+-- | checks where the ball collided with the paddle and changes the y
+--   velocity of the ball according to this.         
 yVelocityMultiplier :: Float -> Float -> Float
 yVelocityMultiplier ball_y racket_y = (ball_y - racket_y)
          
+
 -- | This function will detect a collision of the ball with the paddle.
 -- When there is a collision, the velocity of the ball will change to 
 -- bounce it off the paddle
@@ -262,11 +269,11 @@ paddleBounce game = game { ballVel = (vx1', vy1'), ball2Vel = (vx2', vy2') }
     
     -- changes x velocity of first ball if there is a collision
     (vx1', vy1') =  if leftPaddleCollision (ballLoc game) game ballRadius 
-      then (-vx1, yVelocityMultiplier paddle1Loc vy1)
-      --then (-vx1, vy1)
+      --then (-vx1, yVelocityMultiplier paddle1Loc vy1)
+      then (-vx1, vy1)
       else  if rightPaddleCollision (ballLoc game) game ballRadius
-      then (-vx1, yVelocityMultiplier paddle2Loc vy1)
-      --then (-vx1, vy1)
+      --then (-vx1, yVelocityMultiplier paddle2Loc vy1)
+      then (-vx1, vy1)
       else (vx1, vy1)
      
       
@@ -286,7 +293,9 @@ the ball radius is 10.
 -}
 
 
--- Need to create a paddle collision function for each paddle
+-- | Collision detection for the left paddle
+--   this is a seperate function to the right paddle collision as it 
+--   is important to know which paddle each ball has collided with
 leftPaddleCollision :: Position -> PongGame -> Radius -> Bool
 leftPaddleCollision (x, y) game radius = leftCollision
   where
@@ -308,7 +317,11 @@ leftPaddleCollision (x, y) game radius = leftCollision
         (x - xOffset >= (-playerXVal - radius)) &&
         (y + radius >= player2PaddleLoc - paddleRadius) &&
         (y - radius <=  player2PaddleLoc + paddleRadius)
-        
+
+
+-- | Collision detection for the right paddle
+--   returns true if the given (x,y) coordinates have collided with the
+--   right paddle.        
 rightPaddleCollision :: Position -> PongGame -> Radius -> Bool
 rightPaddleCollision (x, y) game radius = rightCollision
   where
@@ -327,7 +340,9 @@ rightPaddleCollision (x, y) game radius = rightCollision
         -- checks if ball is below paddle
         (y - radius <=  player1PaddleLoc + paddleRadius)
 
-  
+-- | Collision detection for the walls, works in a similar way to the paddle collisions
+--   it is not important to know which wall has been collided with as
+--   the resulting velocity changes are always the same.  
 wallCollision :: Position -> Radius -> Bool 
 wallCollision (_, y) radius = topCollision || bottomCollision
   where 
@@ -358,6 +373,8 @@ wallBounce game = game { ballVel = (vx1, vy1'), ball2Vel = (vx2, vy2') }
 
 -- KEYBOARD INTERACTION --
 
+-- | takes a certain keyboard event and returns an altered PongGame
+--   world state.
 handleKeys :: Event -> PongGame -> PongGame
 
 handleKeys (EventKey (Char 'w') _ _ _ ) game =
@@ -397,8 +414,8 @@ handleKeys (EventKey (Char 'v') _ _ _) game =
 handleKeys _ game = game
 
 
--- checks if any keys are being pressed and updates the corresponding
--- player position
+-- | checks if any keys are being pressed and updates the corresponding
+--   player position
 updateKeyPress :: PongGame -> PongGame
 updateKeyPress game = game { player1 = x', player2 = y' }
   where
@@ -418,10 +435,13 @@ updateKeyPress game = game { player1 = x', player2 = y' }
     else if downKey game && player1 game > lowerBoundary then player1 game - 10
     else x
  
-
+-- | Main function
+--   Since this function is of type IO, this allows us to perform multithreading
+--   within this function. The playsound function loops indefinitely until 
+--   the program itself has been terminated.
 main :: IO ()
 main = do
-    -- forkIO playSound 
+    forkIO playSound 
     Graphics.Gloss.Interface.Pure.Game.play window background fps initialState render handleKeys update
     
 
