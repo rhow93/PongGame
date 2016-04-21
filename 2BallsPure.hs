@@ -123,10 +123,10 @@ moveBall seconds game = game { ballLoc = (x', y'), ball2Loc = (x'', y'') }
 -- | Update the game by moving the ball
 -- Ignores viewport argument
 update :: Float -> PongGame -> PongGame
-update seconds = (updateKeyPress) .                  -- ^ checks for key presses, and updates paddle location
-                 (goalScored) .                      -- ^ checks if a goal has been scored
-                 (wallBounce) .                      -- ^ checks for wall collisions
-                 (paddleBounce . moveBall seconds)   -- ^ checks for paddle collisions
+update seconds = (updateKeyPress) .                  -- checks for key presses, and updates paddle location
+                 (goalScored) .                      -- checks if a goal has been scored
+                 (wallBounce) .                      -- checks for wall collisions
+                 (paddleBounce . moveBall seconds)   -- checks for paddle collisions
 
 goalScored :: PongGame -> PongGame
 goalScored game = game { player1Score = x', player2Score = y'}

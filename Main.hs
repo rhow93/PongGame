@@ -1,3 +1,17 @@
+{-|
+Module      : Main
+Description : A Basic Pong Game using Gloss and ALUT
+License     : GPL-3
+Maintainer  : rhow93@gmail.com
+Stability   : experimental
+Portability : POSIX
+
+A Pong game written using the Gloss graphical libraries
+and ALUT audio libraries to create a basic 2-D pong game, used as a basis
+for comparison to a similar game created in C++. The two creations are to be
+compared to each other and analysed to determine strengths and weaknesses
+to a functional approach to game design and development. 
+-}
 module Main(main) where
 
 import Graphics.Gloss
@@ -178,12 +192,13 @@ moveBall seconds game = game { ballLoc = (x', y'), ball2Loc = (x'', y'') }
 
                                  
 -- | Update the game by moving the ball
--- Ignores viewport argument
+--   checks for keypresses, goals, wallbounces and paddlebounces
+--   also moves the ball according to the frames per second value
 update :: Float -> PongGame -> PongGame
-update seconds = (updateKeyPress) .                  -- ^ checks for key presses, and updates paddle location
-                 (goal) .                      -- ^ checks if a goal has been scored
-                 (wallBounce) .                      -- ^ checks for wall collisions
-                 (paddleBounce . moveBall seconds)   -- ^ checks for paddle collisions
+update seconds = (updateKeyPress) .                  -- checks for key presses, and updates paddle location
+                 (goal) .                            -- checks if a goal has been scored
+                 (wallBounce) .                      -- checks for wall collisions
+                 (paddleBounce . moveBall seconds)   -- checks for paddle collisions
 
 
 -- | the aim of this function is to simplify the update funciton
